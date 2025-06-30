@@ -24,3 +24,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@layer utilities {
+  .text-gold-600 {
+    color: #D4AF37;
+  }
+  .text-gold-700 {
+    color: #C5A020;
+  }
+}
