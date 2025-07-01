@@ -43,9 +43,10 @@ export default function MenuPage() {
         <Image
           src="/logo.png" 
           alt="AES Luxury Logo"
-          layout="fill"
-          objectFit="contain"
-        />
+          fill
+          style={{ objectFit: "contain" }}
+          priority
+          />
       </div>
 
       <div className="relative z-10">
