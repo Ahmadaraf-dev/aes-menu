@@ -1,94 +1,97 @@
-// 📁 app/menu/page.jsx
 "use client";
-import { QRCodeCanvas } from 'qrcode.react';
 
-
-const menuData = [
-  {
-    category: "Breakfast",
-    items: [
-      { name: "Pancakes", price: "₦2,000", description: "Served with syrup and butter" },
-      { name: "Omelette", price: "₦1,800", description: "Three-egg omelette with vegetables" },
-    ],
-  },
-  {
-    category: "Lunch",
-    items: [
-      { name: "Jollof Rice", price: "₦3,000", description: "Served with chicken & plantain" },
-      { name: "Fried Rice", price: "₦3,000", description: "Served with grilled turkey" },
-    ],
-  },
-  {
-    category: "Dinner",
-    items: [
-      { name: "Yam Porridge", price: "₦2,500", description: "Yam cooked with palm oil and vegetables" },
-      { name: "Efo Riro", price: "₦2,800", description: "Vegetable soup with assorted meat" },
-    ],
-  },
-  {
-    category: "Drinks",
-    items: [
-      { name: "Chapman", price: "₦1,500", description: "Refreshing fruit punch" },
-      { name: "Water", price: "₦500", description: "Bottled water (75cl)" },
-    ],
-  },
-  {
-    category: "Desserts",
-    items: [
-      { name: "Ice Cream", price: "₦1,200", description: "Vanilla or chocolate scoop" },
-      { name: "Fruit Salad", price: "₦1,000", description: "Fresh seasonal fruits" },
-    ],
-  },
-];
+import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../lib/firebase";
+import Image from "next/image";
 
 export default function MenuPage() {
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [openCategories, setOpenCategories] = useState({});
+
+  const categories = ["Breakfast", "Lunch", "Dinner", "Drinks", "Desserts"];
+
+  useEffect(() => {
+    const fetchMenu = async () => {
+      const querySnapshot = await getDocs(collection(db, "menu"));
+      const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setMenuItems(items);
+      setLoading(false);
+    };
+
+    fetchMenu();
+  }, []);
+
+  const filteredItems = menuItems.filter(item =>
+    item.name.toLowerCase().includes(search.toLowerCase()) ||
+    item.description.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const toggleCategory = (category) => {
+    setOpenCategories((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }));
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold text-center text-blue-800 mb-8">
-        AES Luxury Restaurant Menu
-      </h1>
+    <div className="relative min-h-screen p-6 bg-white max-w-4xl mx-auto overflow-hidden">
+      {/* Background watermark */}
+      <div className="absolute inset-0 opacity-5 z-0 pointer-events-none">
+        <Image
+          src="/logo.png" 
+          alt="AES Luxury Logo"
+          layout="fill"
+          objectFit="contain"
+        />
+      </div>
 
-      {menuData.map((section) => (
-        <div key={section.category} className="mb-16">
-          <h2 className="text-xl font-semibold text-gold-700 mb-4">
-            {section.category}
-          </h2>
+      <div className="relative z-10">
+        <h1 className="text-4xl font-serif font-bold text-center text-blue-900 mb-6">Our Menu</h1>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {section.items.map((item, index) => (
-              <div
-                key={index}
-                className="border border-blue-100 bg-white rounded-2xl shadow-sm hover:shadow-lg p-4 transition-all"
-              >
-                <h3 className="text-lg font-bold text-blue-900">{item.name}</h3>
-                <p className="text-gray-600 text-sm mt-1">{item.description}</p>
-                <p className="text-gold-600 font-semibold mt-2">{item.price}</p>
+        <input
+          type="text"
+          placeholder="Search menu..."
+          className="w-full p-2 border rounded mb-6"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        {loading ? (
+          <p className="text-center font-semibold">Loading menu...</p>
+        ) : (
+          categories.map((cat) => {
+            const itemsInCategory = filteredItems.filter(item => item.category === cat);
+            if (itemsInCategory.length === 0) return null;
+
+            return (
+              <div key={cat} className="mb-6 border rounded shadow">
+                <button
+                  onClick={() => toggleCategory(cat)}
+                  className="w-full flex justify-between items-center px-4 py-3 bg-blue-100 text-blue-900 font-bold font-serif rounded-t text-lg"
+                >
+                  <span>{cat}</span>
+                  <span>{openCategories[cat] ? "▲" : "▼"}</span>
+                </button>
+
+                {openCategories[cat] && (
+                  <div className="p-4 bg-blue-50 space-y-3">
+                    {itemsInCategory.map(item => (
+                      <div key={item.id} className="border-b pb-2">
+                        <h3 className="font-semibold font-serif text-lg text-blue-800">{item.name}</h3>
+                        <p className="text-sm text-gray-600">{item.description}</p>
+                        <p className="text-gold-700 font-medium">₦{item.price}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-
-          {/* QR Code */}
-          <div className="mt-6 flex justify-center">
-            <div className="bg-white p-4 rounded-xl shadow">
-              <p className="text-center text-sm text-gray-600 mb-2">
-                Scan to view {section.category} menu on your phone
-              </p>
-              <QRCodeCanvas
-                 value={`https://aes-menu.vercel.app/menu/${section.category.toLowerCase()}`}
-                  size={128}
-              />
-            </div>
-          </div>
-        </div>
-      ))}
-
-      {/* Floating Contact Button */}
-      <a
-        href="tel:0"
-        className="fixed bottom-6 right-6 bg-gold-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-gold-700 transition"
-      >
-        📞 Room Service
-      </a>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }
