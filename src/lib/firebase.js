@@ -1,17 +1,8 @@
-// lib/firebase.js
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-
 const firebaseConfig = {
-  apiKey: "AIzaSyAQuZv4Tv77CgeN62mMtQY66SxozHojPnI",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: "aes-luxury-menu.firebaseapp.com",
   projectId: "aes-luxury-menu",
-  storageBucket: "aes-luxury-menu.firebasestorage.app",
+  storageBucket: "aes-luxury-menu.appspot.com",
   messagingSenderId: "640543948713",
   appId: "1:640543948713:web:884fd3f3efd3dbe2cd8eb8"
 };
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-export { db };
